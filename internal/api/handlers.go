@@ -19,7 +19,8 @@ import (
 var ClickEventsChannel chan models.ClickEvent
 
 // SetupRoutes configure toutes les routes de l'API Gin et injecte les dépendances nécessaires
-func SetupRoutes(router *gin.Engine, linkService *services.LinkService, cfg *config.Config) {
+// Ajout de clickService en paramètre pour respecter le TODO et permettre son utilisation dans les handlers si besoin.
+func SetupRoutes(router *gin.Engine, linkService *services.LinkService, clickService *services.ClickService, cfg *config.Config) {
 	// Le channel est initialisé ici.
 	if ClickEventsChannel == nil {
 		// TODO Créer le channel ici (make), il doit être bufférisé
@@ -39,8 +40,6 @@ func SetupRoutes(router *gin.Engine, linkService *services.LinkService, cfg *con
 		v1.POST("/links", CreateShortLinkHandler(linkService, cfg))
 		v1.GET("/links/:shortCode/stats", GetLinkStatsHandler(linkService))
 	}
-
-
 
 	// Route de Redirection (au niveau racine pour les short codes)
 	router.GET("/:shortCode", RedirectHandler(linkService))
@@ -68,7 +67,6 @@ func CreateShortLinkHandler(linkService *services.LinkService, cfg *config.Confi
 			return
 		}
 
-
 		// TODO: Appeler le LinkService (CreateLink pour créer le nouveau lien.
 		link, err := linkService.CreateLink(req.LongURL)
 		if err != nil {
@@ -76,7 +74,6 @@ func CreateShortLinkHandler(linkService *services.LinkService, cfg *config.Confi
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 			return
 		}
-
 
 		// Retourne le code court et l'URL longue dans la réponse JSON.
 		// TODO Choisir le bon code HTTP
@@ -112,10 +109,10 @@ func RedirectHandler(linkService *services.LinkService) gin.HandlerFunc {
 
 		// TODO 3: Créer un ClickEvent avec les informations pertinentes.
 		clickEvent := models.ClickEvent{
-			LinkID: link.ID, // ID du lien récupéré
-			Timestamp: time.Now(), // Timestamp actuel
+			LinkID:    link.ID,               // ID du lien récupéré
+			Timestamp: time.Now(),            // Timestamp actuel
 			UserAgent: c.Request.UserAgent(), // User-Agent de la requête
-			IPAddress: c.ClientIP(), // Adresse IP du client
+			IPAddress: c.ClientIP(),          // Adresse IP du client
 		}
 
 		// TODO 4: Envoyer le ClickEvent dans le ClickEventsChannel avec le Multiplexage.
@@ -128,14 +125,12 @@ func RedirectHandler(linkService *services.LinkService) gin.HandlerFunc {
 			log.Printf("Warning: ClickEventsChannel is full, dropping click event for %s.", shortCode)
 		}
 
-
-
 		// TODO 5: Effectuer la redirection HTTP 302 (StatusFound) vers l'URL longue.
 		c.Redirect(http.StatusFound, link.LongURL)
 	}
 }
 
-	// GetLinkStatsHandler gère la récupération des statistiques pour un lien spécifique.
+// GetLinkStatsHandler gère la récupération des statistiques pour un lien spécifique.
 func GetLinkStatsHandler(linkService *services.LinkService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO Récupère le shortCode de l'URL avec c.Param
