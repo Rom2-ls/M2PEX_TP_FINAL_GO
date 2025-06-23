@@ -46,8 +46,50 @@ func (s *LinkService) GenerateShortCode(length int) (string, error) {
 
 // CreateLink crée un nouveau lien raccourci.
 func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
-	// TODO: Implémenter la logique de création de lien avec unicité du shortcode
-	return nil, nil
+	const codeLength = 6
+	const maxRetries = 5
+	var shortCode string
+	var err error
+
+	// Tentatives pour générer un code unique
+	for i := 0; i < maxRetries; i++ {
+		var code string
+		code, err = s.GenerateShortCode(codeLength)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate short code: %w", err)
+		}
+
+		// Vérifie si le code existe déjà
+		_, err = s.linkRepo.GetLinkByShortCode(code)
+		if err != nil {
+			// Si l'erreur est 'record not found', le code est unique
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				shortCode = code
+				break
+			}
+			// Autre erreur DB
+			return nil, fmt.Errorf("database error checking short code uniqueness: %w", err)
+		}
+		// Si aucune erreur, le code existe déjà, on retente
+	}
+
+	if shortCode == "" {
+		return nil, errors.New("could not generate a unique short code after several attempts")
+	}
+
+	// Crée une nouvelle instance du modèle Link
+	link := &models.Link{
+		Shortcode: shortCode,
+		LongURL:   longURL,
+		// CreatedAt sera géré automatiquement par GORM
+	}
+
+	// Persiste le nouveau lien dans la base de données via le repository
+	if err := s.linkRepo.CreateLink(link); err != nil {
+		return nil, fmt.Errorf("failed to persist new link: %w", err)
+	}
+
+	return link, nil
 }
 
 // GetLinkByShortCode récupère un lien via son code court.
