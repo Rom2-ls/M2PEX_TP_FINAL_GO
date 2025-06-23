@@ -4,9 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
-	"time"
 
 	"gorm.io/gorm" // Nécessaire pour la gestion spécifique de gorm.ErrRecordNotFound
 
@@ -79,7 +77,7 @@ func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
 
 	// Crée une nouvelle instance du modèle Link
 	link := &models.Link{
-		Shortcode: shortCode,
+		ShortCode: shortCode,
 		LongURL:   longURL,
 		// CreatedAt sera géré automatiquement par GORM
 	}
