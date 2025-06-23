@@ -94,13 +94,28 @@ func (s *LinkService) CreateLink(longURL string) (*models.Link, error) {
 
 // GetLinkByShortCode récupère un lien via son code court.
 func (s *LinkService) GetLinkByShortCode(shortCode string) (*models.Link, error) {
-	// TODO: Utiliser le repository pour récupérer le lien
-	return nil, nil
+	// Utilise le repository pour récupérer le lien par son code court
+	link, err := s.linkRepo.GetLinkByShortCode(shortCode)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get link by shortcode: %w", err)
+	}
+	return link, nil
 }
 
 // GetLinkStats récupère les statistiques pour un lien donné (nombre total de clics).
 func (s *LinkService) GetLinkStats(shortCode string) (*models.Link, int, error) {
-	// TODO: Récupérer le lien et compter les clics
-	return nil, 0, nil
+	// Récupère le lien par son shortCode
+	link, err := s.linkRepo.GetLinkByShortCode(shortCode)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get link by shortcode: %w", err)
+	}
+
+	// Compte le nombre de clics pour ce LinkID
+	clicks, err := s.linkRepo.CountClicksByLinkID(link.ID)
+	if err != nil {
+		return link, 0, fmt.Errorf("failed to count clicks for link: %w", err)
+	}
+
+	return link, clicks, nil
 }
 
