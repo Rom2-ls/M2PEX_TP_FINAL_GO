@@ -32,8 +32,16 @@ func NewLinkService(linkRepo repository.LinkRepository) *LinkService {
 
 // GenerateShortCode génère un code court aléatoire d'une longueur spécifiée.
 func (s *LinkService) GenerateShortCode(length int) (string, error) {
-	// TODO: Implémenter la génération sécurisée d'un code court
-	return "", nil
+	// Génère un code court aléatoire sécurisé de la longueur spécifiée
+	b := make([]byte, length)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = charset[n.Int64()]
+	}
+	return string(b), nil
 }
 
 // CreateLink crée un nouveau lien raccourci.
