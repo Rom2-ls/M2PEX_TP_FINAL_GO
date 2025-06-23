@@ -7,3 +7,10 @@ package models
 // Shortcode : doit être unique, indexé pour des recherches rapide (voir doc), taille max 10 caractères
 // LongURL : doit pas être null
 // CreateAt : Horodatage de la créatino du lien
+
+type Link struct {
+	ID        uint   `gorm:"primaryKey"`        // Clé primaire
+	Shortcode string `gorm:"uniqueIndex;size:10"` // Code court unique, indexé pour des recherches rapides, taille maximale de 10 caractères
+	LongURL   string `gorm:"not null"` // URL longue, ne peut pas être nulle
+	CreatedAt int64 `gorm:"autoCreateTime"` // Horodatage de création, automatiquement défini par GORM
+}
